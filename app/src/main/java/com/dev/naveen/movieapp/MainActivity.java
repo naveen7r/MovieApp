@@ -30,7 +30,7 @@ public class MainActivity extends AppCompatActivity implements MoviesListener {
         setContentView(R.layout.activity_main);
 
         loadData(getString(R.string.discover_movies_most_rated));
-        showOrHideTryAgain();
+       // showOrHideTryAgain();
         Button btTryAgain = findViewById(R.id.btTryAgain);
         btTryAgain.setOnClickListener(new View.OnClickListener() {
             @Override
