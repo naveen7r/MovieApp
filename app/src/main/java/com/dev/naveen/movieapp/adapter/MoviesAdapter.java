@@ -10,6 +10,7 @@ import android.widget.ImageView;
 import com.dev.naveen.movieapp.MovieDetailedActivity;
 import com.dev.naveen.movieapp.R;
 import com.dev.naveen.movieapp.dto.ResultsItem;
+import com.dev.naveen.movieapp.listener.AdapterItemClickListener;
 import com.dev.naveen.movieapp.util.NetworkHelper;
 import com.squareup.picasso.Picasso;
 
@@ -51,9 +52,9 @@ public class MoviesAdapter extends RecyclerView.Adapter<MoviesAdapter.MovieHolde
                 public void onClick(View v) {
                     int pos = Integer.parseInt(v.getTag().toString());
                     ResultsItem resultsItem1 = resultsItemList.get(pos);
-                    Intent intent = new Intent(context, MovieDetailedActivity.class);
-                    intent.putExtra(context.getString(R.string.movie_details), resultsItem1);
-                    context.startActivity(intent);
+                   if(context instanceof AdapterItemClickListener){
+                       ((AdapterItemClickListener) context).onItemClicked(resultsItem1);
+                   }
                 }
             });
         }

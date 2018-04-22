@@ -1,5 +1,6 @@
 package com.dev.naveen.movieapp;
 
+import android.content.Intent;
 import android.content.res.Configuration;
 import android.os.Parcelable;
 import android.support.v7.app.AppCompatActivity;
@@ -17,10 +18,12 @@ import android.widget.Toast;
 
 import com.dev.naveen.movieapp.adapter.MoviesAdapter;
 import com.dev.naveen.movieapp.dto.MovieResponse;
+import com.dev.naveen.movieapp.dto.ResultsItem;
+import com.dev.naveen.movieapp.listener.AdapterItemClickListener;
 import com.dev.naveen.movieapp.listener.MoviesListener;
 import com.dev.naveen.movieapp.util.NetworkHelper;
 
-public class MainActivity extends AppCompatActivity implements MoviesListener {
+public class MainActivity extends AppCompatActivity implements MoviesListener, AdapterItemClickListener {
 
     private MovieResponse myMovieResponse;
 
@@ -143,5 +146,16 @@ public class MainActivity extends AppCompatActivity implements MoviesListener {
     protected void onDestroy() {
         myMovieResponse = null;
         super.onDestroy();
+    }
+
+    @Override
+    public void onItemClicked(ResultsItem resultsItem) {
+        if(resultsItem != null) {
+            Intent intent = new Intent(this, MovieDetailedActivity.class);
+            intent.putExtra(getString(R.string.movie_details), resultsItem);
+            startActivity(intent);
+        } else {
+            Toast.makeText(this, getString(R.string.unable_to_load_content), Toast.LENGTH_LONG).show();
+        }
     }
 }

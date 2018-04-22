@@ -6,6 +6,8 @@ import android.net.NetworkInfo;
 import android.text.TextUtils;
 import android.util.Log;
 
+import com.dev.naveen.movieapp.BuildConfig;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
@@ -19,8 +21,7 @@ import java.util.Scanner;
 
 public class NetworkHelper {
 
-    // Todo: Replace your api key here
-    private static final String API_KEY = "REPLACE_API_KEY";
+    private static final String API_KEY = BuildConfig.API_KEY;
 
     private static final String DOMAIN = "api.themoviedb.org";
 
