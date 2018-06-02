@@ -3,6 +3,7 @@
             <!ENTITY key_base_url "BASE_URL">
             <!ENTITY key_api_key "KEY_API">
             <!ENTITY key_density "KEY_DENSITY">
+            <!ENTITY key_id "KEY_ID">
         ]
     >
 
@@ -10,17 +11,27 @@
     <string name="app_name">MovieApp</string>
     <string name="discover_movies_popular">&key_base_url;movie/popular?sort_by=popularity.desc&amp;api_key=&key_api_key;</string>
     <string name="discover_movies_most_rated">&key_base_url;movie/top_rated?certification_country=US&amp;certification=R&amp;sort_by=vote_average.desc&amp;api_key=&key_api_key;</string>
+    <string name="discover_reviews">&key_base_url;movie/&key_id;/reviews?api_key=&key_api_key;</string>
+    <string name="discover_trailers">&key_base_url;movie/&key_id;/videos?api_key=&key_api_key;</string>
+
+
     <string name="image_url">&key_base_url;&key_density;</string>
     <string name="no_network_available">No network available. Try again later.</string>
     <string name="mostpopular">Most Popular</string>
     <string name="mostrated">Most Rated</string>
     <string name="movie_details">MOVIE_DETAILS</string>
 
-    <string name="title_value">Title\t:\t%1$s</string>
-    <string name="overview_value">Over View\t:\n\t%1$s</string>
+    <string name="title_value">%1$s</string>
+    <string name="overview_value">Over View\t:\n\n\t%1$s</string>
     <string name="userrating_value">User Rating\t:\t%1$s</string>
     <string name="release_date_value">Release Date\t:\t%1$s</string>
     <string name="try_again">Try Again</string>
     <string name="saveinstance">saveinstance</string>
     <string name="unable_to_load_content">Something went wrong. Unable to load content.</string>
+    <string name="trailer">Trailers</string>
+    <string name="reviews">Reviews</string>
+    <string name="name">Name :</string>
+    <string name="favourite">Favourite</string>
+    <string name="nodatafound">No Data Found</string>
+    <string name="menutype">menutype</string>
 </resources>

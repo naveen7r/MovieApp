@@ -43,7 +43,7 @@ public class MoviesAdapter extends RecyclerView.Adapter<MoviesAdapter.MovieHolde
         if (holder != null && resultsItemList != null && position < resultsItemList.size() && resultsItemList.get(position) != null) {
             ResultsItem resultsItem = resultsItemList.get(position);
             holder.ivMovie.getLayoutParams().height = height;
-            String imageUrl = NetworkHelper.constructImageUrl(context.getString(R.string.image_url), resultsItem.getPoster_path());
+            String imageUrl = NetworkHelper.constructImageUrl(context.getString(R.string.image_url), resultsItem.getPoster_path().toString());
             Picasso.get().load(imageUrl).into(holder.ivMovie);
 
             holder.ivMovie.setTag(position + "");

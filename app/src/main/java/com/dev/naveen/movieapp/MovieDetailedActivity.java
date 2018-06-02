@@ -1,29 +1,41 @@
 package com.dev.naveen.movieapp;
 
-import android.graphics.Typeface;
+import android.arch.lifecycle.ViewModelProviders;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
-import android.text.Spannable;
-import android.text.SpannableString;
-import android.text.TextUtils;
-import android.text.style.StyleSpan;
-import android.util.DisplayMetrics;
-import android.util.Log;
-import android.widget.ImageView;
-import android.widget.TextView;
+import android.support.v7.widget.DividerItemDecoration;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
 
+import com.dev.naveen.movieapp.adapter.DetailsAdapter;
 import com.dev.naveen.movieapp.dto.ResultsItem;
+import com.dev.naveen.movieapp.dto.reviews.Reviews;
+import com.dev.naveen.movieapp.dto.trailers.Trailers;
+import com.dev.naveen.movieapp.listener.DAOTransListener;
+import com.dev.naveen.movieapp.listener.FavListener;
+import com.dev.naveen.movieapp.listener.FetchListner;
+import com.dev.naveen.movieapp.listener.TrailerListener;
+import com.dev.naveen.movieapp.room.MovieViewModel;
+import com.dev.naveen.movieapp.tasks.GetTrailers;
 import com.dev.naveen.movieapp.util.NetworkHelper;
-import com.squareup.picasso.Picasso;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Created by Naveen on 4/21/2018.
  */
 
-public class MovieDetailedActivity extends AppCompatActivity {
+public class MovieDetailedActivity extends AppCompatActivity implements DAOTransListener {
 
     private static final String TAG = MovieDetailedActivity.class.getCanonicalName();
+
+    private boolean isFav = false;
+
+    private MovieViewModel movieViewModel;
+    private Trailers trailers;
+    private Reviews reviews;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -39,73 +51,140 @@ public class MovieDetailedActivity extends AppCompatActivity {
             }
         }
 
-        ImageView ivMovie = findViewById(R.id.ivMovieImg);
-        TextView tvTitle = findViewById(R.id.tvTitle);
-        TextView tvOverview = findViewById(R.id.tvOverview);
-        TextView tvUserRating = findViewById(R.id.tvUserRating);
-        TextView tvReleaseDate = findViewById(R.id.tvReleaseDate);
+        movieViewModel = ViewModelProviders.of(this).get(MovieViewModel.class);
 
+        final ResultsItem finalResultsItem = resultsItem;
 
-        if (resultsItem != null) {
-            String title = resultsItem.getTitle();
-            if (!TextUtils.isEmpty(title)) {
-                tvTitle.setText(getString(R.string.title_value,title));
+        movieViewModel.isFavourite(resultsItem.getId(), new FavListener() {
+            @Override
+            public void onSuccess(boolean isFavourite) {
+                isFav = isFavourite;
+                MovieDetailedActivity.this.runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        init(finalResultsItem);
+                    }
+                });
+            }
+        });
+
+    }
+
+    private void populate(List<Object> res) {
+        for (Object obj : res) {
+            if (obj instanceof Trailers) {
+                this.trailers = ((Trailers) obj);
             }
 
-            String overview = resultsItem.getOverview();
-            if (!TextUtils.isEmpty(overview)) {
-                SpannableString spOverView = new SpannableString(getString(R.string.overview_value, overview));
-                spOverView.setSpan(new StyleSpan(Typeface.BOLD), 0, 9, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
-                tvOverview.setText(spOverView);
+            if (obj instanceof Reviews) {
+                this.reviews = ((Reviews) obj);
             }
-
-            double voteAverage = resultsItem.getVote_average();
-            if (voteAverage != -1) {
-                SpannableString spUserRating = new SpannableString(getString(R.string.userrating_value,voteAverage + ""));
-                spUserRating.setSpan(new StyleSpan(Typeface.BOLD), 0, 12, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
-                tvUserRating.setText(spUserRating);
-            }
-
-            String releaseDate = resultsItem.getRelease_date();
-            if (!TextUtils.isEmpty(releaseDate)) {
-                SpannableString spReleaseDate = new SpannableString(getString(R.string.release_date_value,releaseDate));
-                spReleaseDate.setSpan(new StyleSpan(Typeface.BOLD), 0, 12, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
-                tvReleaseDate.setText(spReleaseDate);
-            }
-
-            String imagePath = resultsItem.getPoster_path();
-            Log.d(TAG, imagePath +" 000");
-            if (!TextUtils.isEmpty(imagePath)) {
-
-                ivMovie.getLayoutParams().height = getHeight();
-
-                String url = NetworkHelper.constructImageUrl(getString(R.string.image_url), imagePath);
-                Log.d(TAG, url);
-                Picasso.get().load(url).into(ivMovie);
-            }
-
         }
-
     }
 
-    private int getHeight() {
-        float sW = 187f;
-        float sH = 274f;
+    private void init(final ResultsItem finalResultsItem) {
+        if (NetworkHelper.isNetworkAvailable(this) && !isFav) {
+            new GetTrailers(this, new TrailerListener() {
 
-        int width = getResources().getDisplayMetrics().widthPixels - dpToPx(20);
+                @Override
+                public void onSuccess(List<Object> trailersAndReviews) {
+                    if (trailersAndReviews != null) {
+                        trailersAndReviews.add(0, finalResultsItem);
+                        init(trailersAndReviews);
+                    } else {
+                        List<Object> list = new ArrayList<>();
+                        list.add(finalResultsItem);
+                        init(list);
+                    }
+                }
+            }).execute(finalResultsItem.getId() + "");
+        } else if (isFav) {
 
+            movieViewModel.fetchReviewTrailersById(finalResultsItem.getId() + "", new FetchListner() {
+                @Override
+                public void onSuccess(List<com.dev.naveen.movieapp.dto.reviews.ResultsItem> reviews, List<com.dev.naveen.movieapp.dto.trailers.ResultsItem> trailers) {
+                    final List<Object> list = new ArrayList<>();
+                    list.add(finalResultsItem);
+                    Trailers trailers1 = new Trailers();
+                    trailers1.setResults(trailers);
+                    list.add(trailers1);
+                    Reviews reviews1 = new Reviews();
+                    reviews1.setResults(reviews);
+                    list.add(reviews1);
 
-        return (int) ((float) width / (sW / sH));
+                    MovieDetailedActivity.this.runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            init(list);
+                        }
+                    });
+                }
+            });
+        } else {
+            List<Object> list = new ArrayList<>();
+            list.add(finalResultsItem);
+            if (trailers != null)
+                list.add(trailers);
+            if (reviews != null)
+                list.add(reviews);
+            init(list);
+        }
     }
 
-    public int dpToPx(int dp) {
-        DisplayMetrics displayMetrics = getResources().getDisplayMetrics();
-        return Math.round(dp * (displayMetrics.xdpi / DisplayMetrics.DENSITY_DEFAULT));
+    private void init(List<Object> trailersAndReviews) {
+        if (trailersAndReviews != null) {
+            populate(trailersAndReviews);
+            RecyclerView rvDetails = findViewById(R.id.rvDetails);
+            DetailsAdapter detailsAdapter = new DetailsAdapter(trailersAndReviews, MovieDetailedActivity.this, MovieDetailedActivity.this, isFav);
+            rvDetails.setLayoutManager(new LinearLayoutManager(MovieDetailedActivity.this, LinearLayoutManager.VERTICAL, false));
+            rvDetails.addItemDecoration(new DividerItemDecoration(MovieDetailedActivity.this, DividerItemDecoration.VERTICAL));
+            rvDetails.setAdapter(detailsAdapter);
+        }
+    }
+
+    @Override
+    protected void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+        outState.putParcelable(getString(R.string.trailer), trailers);
+        outState.putParcelable(getString(R.string.reviews), reviews);
     }
 
 
     @Override
+    protected void onRestoreInstanceState(Bundle savedInstanceState) {
+        super.onRestoreInstanceState(savedInstanceState);
+        trailers = savedInstanceState.getParcelable(getString(R.string.trailer));
+        reviews = savedInstanceState.getParcelable(getString(R.string.reviews));
+    }
+
+    @Override
     protected void onDestroy() {
         super.onDestroy();
+    }
+
+    @Override
+    public void addFavouriteMovie(final ResultsItem movie, final List<com.dev.naveen.movieapp.dto.reviews.ResultsItem> reviews, final List<com.dev.naveen.movieapp.dto.trailers.ResultsItem> trailers) {
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                movieViewModel.addMovie(movie);
+                movieViewModel.addReviews(reviews);
+                movieViewModel.addTrailers(trailers);
+            }
+        }).start();
+
+    }
+
+    @Override
+    public void removeFavouriteMovie(final ResultsItem movie, final List<com.dev.naveen.movieapp.dto.reviews.ResultsItem> reviews, final List<com.dev.naveen.movieapp.dto.trailers.ResultsItem> trailers) {
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                movieViewModel.removeMovie(movie);
+                movieViewModel.removeReviews(reviews);
+                movieViewModel.removeTrailers(trailers);
+            }
+        }).start();
+
     }
 }
